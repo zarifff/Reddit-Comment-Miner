@@ -1,6 +1,6 @@
-# This bot analyzes new comments made all over reddit with keywords provided.
-# It then takes the entire string (comment) with the keyword and keeps returning
-# it and stores it in a file. 
+# This bot analyzes new comments made all over reddit with keywords provided (optional).
+# It then takes the entire comment object with the keyword(if provided) and returns
+# it and stores it in a json file with some of its attributes. 
 # Author: Mohammad Zariff Ahsham Ali
 # License: MIT License
 
@@ -10,6 +10,7 @@ import time
 import json
 import pprint
 
+# Path to store already analyzed comments
 historyPath = '/home/zariff/Python Projects/Reddit Bot/commented.txt'
 
 def authenticate():
@@ -95,6 +96,7 @@ def runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, qu
     # currently uses print statements. Will modify later to analyze comments.
     # writeFile = open('/home/zariff/Python Projects/Reddit Bot/test.txt', 'w')
 
+    # Path to write json file
     jsonFile = open('/home/zariff/Python Projects/Reddit Bot/data.json', 'a+')
 
     if(option == 1):
