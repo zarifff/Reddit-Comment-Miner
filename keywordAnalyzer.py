@@ -41,12 +41,12 @@ def chooseRunType():
         keywordList = keywordsToSearch()
 
     elif(option == 2):
-        subredditList = raw_input('Enter subreddits to crawl. Use + only between multiple subreddits if required. (eg. dankmemes+wholesomememes): ')
+        subredditList = raw_input('Enter subreddits to crawl. Use + only between multiple subreddits if required. (eg. Memeconomy+wholesomememes): ')
         quantity = int(raw_input('Enter number of submissions to analyze. Will start from top: '))
         keywordList = keywordsToSearch()
     
     elif(option == 3):
-        subredditList = raw_input('Enter subreddits to crawl. Use + only between multiple subreddits if required. (eg. dankmemes+wholesomememes): ')
+        subredditList = raw_input('Enter subreddits to crawl. Use + only between multiple subreddits if required. (eg. Memeconomy+wholesomememes): ')
         keywordList = keywordsToSearch()
 
     else:
