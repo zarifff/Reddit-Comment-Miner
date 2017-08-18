@@ -84,10 +84,11 @@ def duplicateComment(commentID):
         return True
 
 def makeDict(comment):
-    # to make json object and dump it
+    # Just a simple line to make a dict in proper formatting for json file
     return {str(comment.id) : {'body' : comment.body, 'created_utc' : comment.created_utc, 'ups' : comment.ups, 'downs' : comment.downs, 'score' : comment.score, 'subreddit' : comment.subreddit.display_name}}
 
 def getCommentWithKeyWords(submission, keywordList):
+    # Returns a dictionary of commentID : comment-attributes-dictionary
     d = {}
     submission.comments.replace_more(limit=0)
     for comment in submission.comments.list():
@@ -98,6 +99,7 @@ def getCommentWithKeyWords(submission, keywordList):
 
 
 def getcommentWithOutKeyWords(submission):
+    # Returns a dictionary of commentID : comment-attributes-dictionary
     d = {}
     submission.comments.replace_more(limit=0)
     for comment in submission.comments.list():
@@ -109,7 +111,8 @@ def getcommentWithOutKeyWords(submission):
 def runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, quantity, submissionURL, fileName):
     # Runs the bot. Depending on option number and parameters
     # currently uses print statements. Will modify later to analyze comments.
-    d = {}
+
+    d = {} # Empty dictionaries to be used to update json file.
     data = {}
 
     if(option == 1):
@@ -133,7 +136,7 @@ def runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, qu
         # If keywords not specified, prints out all the comments from said subreddits according to quantity of submissions
         try:
             for submission in redditInstance.subreddit(subredditList).hot(limit=int(quantity)):
-                print '\n\tSubreddit: {}\tSubmission Thread: {}'.format(submission.subreddit.display_name, submission.title)
+                print '\n\tSubreddit: {}\tSubmission Thread: {}'.format(submission.subreddit.display_name.encode('utf-8'), submission.title.encode('utf-8'))
                 if(len(keywordList) > 0):
                     d.update(getCommentWithKeyWords(submission, keywordList))
                 else:
@@ -166,12 +169,14 @@ def runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, qu
         'Invaild Option. Exiting...'
         pass        
     
+    # Checks to see if json file is empty. Otherwise json.load() will fail
     if(os.stat(fileName).st_size > 0):
         with open(fileName) as f:
             data = json.load(f)
             
     data.update(d)
 
+    # After an iteration, we update our json file by overwriting it with the new dictionary
     with open(fileName, 'w') as f:
         json.dump(data, f)
 
@@ -181,7 +186,7 @@ def runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, qu
 def main():
     redditInstance = authenticate()
     option, keywordList, subredditList, quantity, submissionURL = chooseRunType()
-    fileName = raw_input('\nEnter Name of json file to dump data: ')
+    fileName = raw_input('\nEnter Name of json file to dump data: ') # Creates an empty json file of specified name in path.
     fileName = '/home/zariff/Python Projects/Reddit Bot/' + fileName
     jsonFile = open(fileName, 'w')
     jsonFile.close()
