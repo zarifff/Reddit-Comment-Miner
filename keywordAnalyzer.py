@@ -18,7 +18,7 @@ def authenticate():
 
     print 'Authenticating...'
     try:
-        redditInstance = praw.Reddit('keywordAnalyzer', user_agent = 'keywordAnalyzer-bot: v 1.0 (dev: /u/zarifff)')
+        redditInstance = praw.Reddit('keywordAnalyzer', user_agent = 'keywordAnalyzer-bot: v 1.0')
         print 'Successfully Authenticated! Current user: {}\n'.format(redditInstance.user.me())
         return redditInstance
     except:
