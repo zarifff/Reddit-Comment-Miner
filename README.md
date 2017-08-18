@@ -3,6 +3,8 @@ Simple bot to analyze and extract comments from Reddit
 
 Uses PRAW as a wrapper. Required import
 
+You can use a reddit instance using your own credentials, or use PRAW reddit instance if you don't need to interact with the account. Reddit API keys can be found in settings -> apps
+
 Use your own praw.ini file to set credentials, or hardcode it in the source code
 
 Bot has 3 options for now.
