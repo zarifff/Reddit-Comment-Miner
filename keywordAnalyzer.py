@@ -1,6 +1,6 @@
-# This bot analyzes new comments made all over reddit with keywords provided (optional).
-# It then takes the entire comment object with the keyword(if provided) and returns
-# it and stores it in a json file with some of its attributes. 
+# This bot analyzes new comments made all over reddit with keywords provided.
+# It then takes the entire string (comment) with the keyword and keeps returning
+# it and stores it in a file. 
 # Author: Mohammad Zariff Ahsham Ali
 # License: MIT License
 
@@ -8,9 +8,8 @@ import praw
 import re
 import time
 import json
-import pprint
+import os
 
-# Path to store already analyzed comments
 historyPath = '/home/zariff/Python Projects/Reddit Bot/commented.txt'
 
 def authenticate():
@@ -19,7 +18,7 @@ def authenticate():
 
     print 'Authenticating...'
     try:
-        redditInstance = praw.Reddit('keywordAnalyzer', user_agent = 'keywordAnalyzer-bot: v 1.0')
+        redditInstance = praw.Reddit('keywordAnalyzer', user_agent = 'keywordAnalyzer-bot: v 1.0 (dev: /u/zarifff)')
         print 'Successfully Authenticated! Current user: {}\n'.format(redditInstance.user.me())
         return redditInstance
     except:
@@ -41,12 +40,12 @@ def chooseRunType():
         keywordList = keywordsToSearch()
 
     elif(option == 2):
-        subredditList = raw_input('Enter subreddits to crawl. Use + only between multiple subreddits if required. (eg. Memeconomy+wholesomememes): ')
+        subredditList = raw_input('Enter subreddits to crawl. Use + only between multiple subreddits if required. Case sensitive (eg. leagueoflegends+DotA2): ')
         quantity = int(raw_input('Enter number of submissions to analyze. Will start from top: '))
         keywordList = keywordsToSearch()
     
     elif(option == 3):
-        subredditList = raw_input('Enter subreddits to crawl. Use + only between multiple subreddits if required. (eg. Memeconomy+wholesomememes): ')
+        subredditList = raw_input('Enter subreddits to crawl. Use + only between multiple subreddits if required. Case sensitive (eg. leagueoflegends+DotA2): ')
         keywordList = keywordsToSearch()
 
     else:
@@ -59,14 +58,12 @@ def keywordsToSearch():
     # Asks the current user to input keywords to search for
     # Returns keywords as a list.
     keywordList = []
-
-    while(True):
-        choice = raw_input('Press \'y\' to add keywords. Any other key to finish: ')
-        if(choice.lower() == 'y'):
-            keywordList.append(raw_input('Enter Keywords to search for: '))
-            continue
-        else:
-            break
+    keywordString = ''
+    
+    choice = raw_input('Press \'y\' to add keywords. Any other key to finish: ')
+    if(choice.lower() == 'y'):
+        keywordString = raw_input('Enter Keywords to search for (space-separated): ')
+        keywordList = keywordString.split()
 
     return keywordList
 
@@ -86,18 +83,34 @@ def duplicateComment(commentID):
     else:
         return True
 
-def dumpJsonFile(jsonFile, comment):
+def makeDict(comment):
     # to make json object and dump it
-    json.dump({str(comment.id) : {'body' : comment.body, 'created_utc' : comment.created_utc, 'ups' : comment.ups, 'downs' : comment.downs, 'score' : comment.score, 'subreddit' : comment.subreddit.display_name}}, jsonFile)
+    return {str(comment.id) : {'body' : comment.body, 'created_utc' : comment.created_utc, 'ups' : comment.ups, 'downs' : comment.downs, 'score' : comment.score, 'subreddit' : comment.subreddit.display_name}}
+
+def getCommentWithKeyWords(submission, keywordList):
+    d = {}
+    submission.comments.replace_more(limit=0)
+    for comment in submission.comments.list():
+        keywordsToMatch = re.findall(r"(?=("+'|'.join(keywordList)+r"))", comment.body, re.IGNORECASE)
+        if(keywordsToMatch and not duplicateComment(comment.id)):
+            d.update(makeDict(comment))
+    return d
 
 
-def runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, quantity, submissionURL):
+def getcommentWithOutKeyWords(submission):
+    d = {}
+    submission.comments.replace_more(limit=0)
+    for comment in submission.comments.list():
+        if(not duplicateComment(comment.id)):
+            d.update(makeDict(comment))
+    return d
+
+
+def runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, quantity, submissionURL, fileName):
     # Runs the bot. Depending on option number and parameters
     # currently uses print statements. Will modify later to analyze comments.
-    # writeFile = open('/home/zariff/Python Projects/Reddit Bot/test.txt', 'w')
-
-    # Path to write json file
-    jsonFile = open('/home/zariff/Python Projects/Reddit Bot/data.json', 'a+')
+    d = {}
+    data = {}
 
     if(option == 1):
         # Checks if URL is a valid reddit thread.
@@ -109,43 +122,22 @@ def runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, qu
         # If no keywords were entered, 2nd case is performed.
         # Extracts all comments in the following order -> All top-level comments, all 2nd level comments...all n-level comments
         if(len(keywordList) > 0):
-            submission.comments.replace_more(limit=0)
-            for comment in submission.comments.list():
-                keywordsToMatch = re.findall(r"(?=("+'|'.join(keywordList)+r"))", comment.body, re.IGNORECASE)
-                if(keywordsToMatch and not duplicateComment(comment.id)):
-                    dumpJsonFile(jsonFile, comment)
-                    #print comment.body
-                    #writeFile.write(comment.body.encode('utf-8') + '\n')
+            d.update(getCommentWithKeyWords(submission, keywordList))
         else:
-            submission.comments.replace_more(limit=0)
-            for comment in submission.comments.list():
-                if(not duplicateComment(comment.id)):
-                    dumpJsonFile(jsonFile, comment)
-                    #print comment.body
-                    #writeFile.write(comment.body.encode('utf-8') + '\n')
+            d.update(getcommentWithOutKeyWords(submission))
+
         time.sleep(5)
 
     elif(option == 2):
         # Checks the current (quantity) hot submissions in the specified subreddits.
         # If keywords not specified, prints out all the comments from said subreddits according to quantity of submissions
         try:
-            for submission in redditInstance.subreddit(subredditList).hot(limit=quantity):
-                print '\n\tSubmission Thread: {}'.format(submission.title)
+            for submission in redditInstance.subreddit(subredditList).hot(limit=int(quantity)):
+                print '\n\tSubreddit: {}\tSubmission Thread: {}'.format(submission.subreddit.display_name, submission.title)
                 if(len(keywordList) > 0):
-                    submission.comments.replace_more(limit=0)
-                    for comment in submission.comments.list():
-                        keywordsToMatch = re.findall(r"(?=("+'|'.join(keywordList)+r"))", comment.body, re.IGNORECASE)
-                        if(keywordsToMatch and not duplicateComment(comment.id)):
-                            dumpJsonFile(jsonFile, comment)
-                            #print comment.body
-                            #writeFile.write(comment.body + '\n')
+                    d.update(getCommentWithKeyWords(submission, keywordList))
                 else:
-                    submission.comments.replace_more(limit=0)
-                    for comment in submission.comments.list():
-                        if(not duplicateComment(comment.id)):
-                            dumpJsonFile(jsonFile, comment)
-                            #print comment.body
-                            #writeFile.write(comment.body + '\n')
+                    d.update(getcommentWithOutKeyWords(submission))
                 
                 time.sleep(5)
         except:
@@ -156,20 +148,16 @@ def runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, qu
         # if using subreddit().stream.comments(), will print recent as well as future comments indefinitely
         # If using subreddit().comments(), will print out 'limit' number of comments at each iteration
         try:
-            for comment in redditInstance.subreddit(subredditList).stream.comments():
-            #for comment in redditInstance.subreddit(subredditList).comments(limit=250):
+            #for comment in redditInstance.subreddit(subredditList).stream.comments():
+            for comment in redditInstance.subreddit(subredditList).comments(limit=25):
                 if(len(keywordList) > 0):
                     keywordsToMatch = re.findall(r"(?=("+'|'.join(keywordList)+r"))", comment.body, re.IGNORECASE)
                     if(keywordsToMatch and not duplicateComment(comment.id)):
-                        dumpJsonFile(jsonFile, comment)
-                        #print comment.body
-                        #writeFile.write(comment.body.encode('utf-8') + '\n')
+                        d.update(makeDict(comment))
                 else:
-                    dumpJsonFile(jsonFile, comment)
-                    #print comment.body
-                    #writeFile.write(comment.body.encode('utf-8') + '\n')
+                    d.update(makeDict(comment))
                 
-                time.sleep(5)
+                time.sleep(1)
         except:
             print 'Invalid Subreddit List. Exiting...'
             pass
@@ -177,14 +165,33 @@ def runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, qu
     else:
         'Invaild Option. Exiting...'
         pass        
-        
+    
+    if(os.stat(fileName).st_size > 0):
+        with open(fileName) as f:
+            data = json.load(f)
+            
+    data.update(d)
+
+    with open(fileName, 'w') as f:
+        json.dump(data, f)
+
     print 'waiting 10 seconds...\n'
-    jsonFile.close()
     time.sleep(10)
 
-if __name__ == '__main__':
+def main():
     redditInstance = authenticate()
     option, keywordList, subredditList, quantity, submissionURL = chooseRunType()
-    
+    fileName = raw_input('\nEnter Name of json file to dump data: ')
+    fileName = '/home/zariff/Python Projects/Reddit Bot/' + fileName
+    jsonFile = open(fileName, 'w')
+    jsonFile.close()
+
     while True:
-        runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, quantity, submissionURL)
+        runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, quantity, submissionURL, fileName)
+
+
+if __name__ == '__main__':
+    main()
+    
+    
+        
