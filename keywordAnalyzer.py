@@ -90,7 +90,7 @@ def makeDict(comment):
 def getCommentWithKeyWords(submission, keywordList):
     # Returns a dictionary of commentID : comment-attributes-dictionary
     d = {}
-    submission.comments.replace_more(limit=0)
+    submission.comments.replace_more(limit=None, threshold=0)
     for comment in submission.comments.list():
         keywordsToMatch = re.findall(r"(?=("+'|'.join(keywordList)+r"))", comment.body, re.IGNORECASE)
         if(keywordsToMatch and not duplicateComment(comment.id)):
@@ -101,9 +101,10 @@ def getCommentWithKeyWords(submission, keywordList):
 def getcommentWithOutKeyWords(submission):
     # Returns a dictionary of commentID : comment-attributes-dictionary
     d = {}
-    submission.comments.replace_more(limit=0)
+    submission.comments.replace_more(limit=None, threshold=0)
     for comment in submission.comments.list():
         if(not duplicateComment(comment.id)):
+            #print comment.body
             d.update(makeDict(comment))
     return d
 
@@ -129,7 +130,6 @@ def runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, qu
         else:
             d.update(getcommentWithOutKeyWords(submission))
 
-        time.sleep(5)
 
     elif(option == 2):
         # Checks the current (quantity) hot submissions in the specified subreddits.
@@ -152,7 +152,7 @@ def runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, qu
         # If using subreddit().comments(), will print out 'limit' number of comments at each iteration
         try:
             #for comment in redditInstance.subreddit(subredditList).stream.comments():
-            for comment in redditInstance.subreddit(subredditList).comments(limit=25):
+            for comment in redditInstance.subreddit(subredditList).comments(limit=250):
                 if(len(keywordList) > 0):
                     keywordsToMatch = re.findall(r"(?=("+'|'.join(keywordList)+r"))", comment.body, re.IGNORECASE)
                     if(keywordsToMatch and not duplicateComment(comment.id)):
@@ -180,8 +180,9 @@ def runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, qu
     with open(fileName, 'w') as f:
         json.dump(data, f)
 
-    print 'waiting 10 seconds...\n'
-    time.sleep(10)
+    if(not option == 1):
+        print 'waiting 10 seconds...\n'
+        time.sleep(10)
 
 def main():
     redditInstance = authenticate()
