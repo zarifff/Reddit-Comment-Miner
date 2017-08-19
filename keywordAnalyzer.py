@@ -90,6 +90,9 @@ def makeDict(comment):
 def getCommentWithKeyWords(submission, keywordList):
     # Returns a dictionary of commentID : comment-attributes-dictionary
     d = {}
+    # Use limit=0 and delete threshold for reddit's default comments per request
+    # If limit=None, more time will be required to process comments in threads with 1000's of comments
+    # But all will be processed. 
     submission.comments.replace_more(limit=None, threshold=0)
     for comment in submission.comments.list():
         keywordsToMatch = re.findall(r"(?=("+'|'.join(keywordList)+r"))", comment.body, re.IGNORECASE)
