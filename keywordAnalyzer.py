@@ -25,6 +25,7 @@ def authenticate():
         print 'Error! Could not Authenticate. Please check credentials.'
         pass
 
+    
 def chooseRunType():
     # Allows user to choose one of three options
     # returns opton, keywordList, subredditList, quantity, submissionURL regardless of choice
@@ -54,6 +55,7 @@ def chooseRunType():
 
     return option, keywordList, subredditList, quantity, submissionURL
 
+
 def keywordsToSearch():
     # Asks the current user to input keywords to search for
     # Returns keywords as a list.
@@ -66,6 +68,7 @@ def keywordsToSearch():
         keywordList = keywordString.split()
 
     return keywordList
+
 
 def duplicateComment(commentID):
     # Checks a text file for duplicate comment IDs
@@ -83,9 +86,11 @@ def duplicateComment(commentID):
     else:
         return True
 
+    
 def makeDict(comment):
     # Just a simple line to make a dict in proper formatting for json file
     return {str(comment.id) : {'body' : comment.body, 'created_utc' : comment.created_utc, 'ups' : comment.ups, 'downs' : comment.downs, 'score' : comment.score, 'subreddit' : comment.subreddit.display_name}}
+
 
 def getCommentWithKeyWords(submission, keywordList):
     # Returns a dictionary of commentID : comment-attributes-dictionary
@@ -114,7 +119,6 @@ def getcommentWithOutKeyWords(submission):
 
 def runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, quantity, submissionURL, fileName):
     # Runs the bot. Depending on option number and parameters
-    # currently uses print statements. Will modify later to analyze comments.
 
     d = {} # Empty dictionaries to be used to update json file.
     data = {}
@@ -187,6 +191,7 @@ def runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, qu
         print 'waiting 10 seconds...\n'
         time.sleep(10)
 
+        
 def main():
     redditInstance = authenticate()
     option, keywordList, subredditList, quantity, submissionURL = chooseRunType()
