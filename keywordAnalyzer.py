@@ -147,9 +147,7 @@ def runKeywordAnalyzerBot(redditInstance, option, keywordList, subredditList, qu
                 if(len(keywordList) > 0):
                     d.update(getCommentWithKeyWords(submission, keywordList))
                 else:
-                    d.update(getcommentWithOutKeyWords(submission))
-                
-                time.sleep(5)
+                    d.update(getcommentWithOutKeyWords(submission))            
         except:
             print 'Invalid subreddit names. Exiting...'
             pass
